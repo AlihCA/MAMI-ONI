@@ -83,11 +83,6 @@ src/
 - Customizable sign-in/sign-up flows
 - User profile management
 
-### Database
-- Supabase integration ready for data persistence
-- Type-safe database operations
-- Real-time capabilities
-
 ## Production Deployment
 
 1. Set up your production environment variables
