@@ -1,0 +1,165 @@
+// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql" 
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String        @id @default(uuid())
+  clerk_user_id    String        @unique
+  email            String?       @unique
+  first_name       String?
+  last_name        String?
+  profile_image_url String?
+  carts            Cart[]
+  wishlists        Wishlist[]
+  testimonials     Testimonial[]
+  orders           Order[]
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
+
+  @@map("users")
+}
+
+model Product {
+  id                  String             @id @default(uuid())
+  name                String
+  description         String?            @db.Text
+  price               Decimal            @db.Decimal(10, 2)
+  category            String
+  image_url           Json               // Store array as JSON
+  stock_quantity      Int
+  is_featured         Boolean            @default(false)
+  is_new_arrival      Boolean            @default(false)
+  discount_percentage Decimal            @default(0) @db.Decimal(5, 2)
+  cart_items          CartItem[]
+  wishlist_items      WishlistItem[]
+  product_categories  ProductCategory[]  // Many-to-many relation
+  order_items         OrderItem[]
+  created_at          DateTime           @default(now())
+  updated_at          DateTime           @updatedAt
+
+  @@map("products")
+}
+
+model Cart {
+  id         String     @id @default(uuid())
+  user_id    String
+  user       User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  is_active  Boolean    @default(true)
+  cart_items CartItem[]
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+
+  @@map("carts")
+}
+
+model CartItem {
+  id         String   @id @default(uuid())
+  cart_id    String
+  cart       Cart     @relation(fields: [cart_id], references: [id], onDelete: Cascade)
+  product_id String
+  product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  quantity   Int      @default(1)
+  added_at   DateTime @default(now())
+
+  @@unique([cart_id, product_id])
+  @@map("cart_items")
+}
+
+model Wishlist {
+  id           String         @id @default(uuid())
+  user_id      String         @unique // One wishlist per user
+  user         User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  items        WishlistItem[]
+  created_at   DateTime       @default(now())
+
+  @@map("wishlists")
+}
+
+model WishlistItem {
+  id           String    @id @default(uuid())
+  wishlist_id  String
+  wishlist     Wishlist  @relation(fields: [wishlist_id], references: [id], onDelete: Cascade)
+  product_id   String
+  product      Product   @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  added_at     DateTime  @default(now())
+
+  @@unique([wishlist_id, product_id])
+  @@map("wishlist_items")
+}
+
+model Category {
+  id                 String            @id @default(uuid())
+  name               String            @unique
+  image_url          String?
+  description        String?
+  is_featured        Boolean           @default(false)
+  product_categories ProductCategory[] // Many-to-many relation
+  created_at         DateTime          @default(now())
+  updated_at         DateTime          @updatedAt
+
+  @@map("categories")
+}
+
+// Junction table for Product-Category many-to-many relationship
+model ProductCategory {
+  id          String   @id @default(uuid())
+  product_id  String
+  category_id String
+  product     Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  category    Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@unique([product_id, category_id])
+  @@map("product_categories")
+}
+
+model Testimonial {
+  id           String    @id @default(uuid())
+  user_id      String?
+  user         User?     @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  content      String    @db.Text
+  rating       Int       @db.TinyInt // 1-5 rating
+  is_approved  Boolean   @default(false)
+  created_at   DateTime  @default(now())
+
+  @@map("testimonials")
+}
+
+// Optional: Order model for complete e-commerce functionality
+model Order {
+  id           String      @id @default(uuid())
+  user_id      String
+  user         User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  total_amount Decimal     @db.Decimal(10, 2)
+  status       OrderStatus @default(PENDING)
+  order_items  OrderItem[]
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String  @id @default(uuid())
+  order_id   String
+  order      Order   @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product_id String
+  product    Product @relation(fields: [product_id], references: [id])
+  quantity   Int
+  price      Decimal @db.Decimal(10, 2) // Price at time of order
+  
+  @@map("order_items")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
