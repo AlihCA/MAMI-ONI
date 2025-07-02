@@ -31,12 +31,6 @@ A fully functional, production-ready e-commerce website built with React, TypeSc
 - Create a new application
 - Copy your publishable key to `VITE_CLERK_PUBLISHABLE_KEY`
 
-#### Supabase Database (Optional - for data persistence)
-- Sign up at [Supabase](https://supabase.com/)
-- Create a new project
-- Copy your project URL to `VITE_SUPABASE_URL`
-- Copy your anon key to `VITE_SUPABASE_ANON_KEY`
-
 ### 2. Installation
 
 ```bash
